@@ -1,0 +1,258 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h> // For password complexity checks
+
+// Structure to represent a bank account
+struct Account {
+    int accountNumber;
+    char name[50];
+    char userid[20];
+    char password[20];
+    float balance;
+};
+
+// Global array to store accounts
+struct Account accounts[100];
+int count = 0;
+int currentUserIndex = -1; // Track logged in user
+
+// Function prototypes
+void createAccount();
+void login();
+void depositMoney();
+void withdrawMoney();
+void checkBalance();
+void changePassword();
+void displayAllAccounts();
+int validatePassword(const char *pass);
+
+int main() {
+    int choice;
+    
+    printf("\n*** ENHANCED BANKING SYSTEM WITH LOGIN ***\n");
+    
+    while(1) {
+        if(currentUserIndex == -1) {
+            printf("\n1. Login");
+            printf("\n2. Create New Account");
+            printf("\n3. Exit");
+            printf("\nEnter your choice: ");
+            scanf("%d", &choice);
+            
+            switch(choice) {
+                case 1:
+                    login();
+                    break;
+                case 2:
+                    createAccount();
+                    break;
+                case 3:
+                    printf("Thank you for using our banking system!\n");
+                    exit(0);
+                default:
+                    printf("Invalid choice! Please try again.\n");
+            }
+        } else {
+            printf("\nWelcome, %s!", accounts[currentUserIndex].name);
+            printf("\nMain Menu\n");
+            printf("1. Deposit Money\n");
+            printf("2. Withdraw Money\n");
+            printf("3. Check Balance\n");
+            printf("4. Change Password\n");
+            printf("5. Logout\n");
+            printf("6. Exit\n");
+            printf("Enter your choice: ");
+            scanf("%d", &choice);
+            
+            switch(choice) {
+                case 1:
+                    depositMoney();
+                    break;
+                case 2:
+                    withdrawMoney();
+                    break;
+                case 3:
+                    checkBalance();
+                    break;
+                case 4:
+                    changePassword();
+                    break;
+                case 5:
+                    currentUserIndex = -1;
+                    printf("Logged out successfully!\n");
+                    break;
+                case 6:
+                    printf("Thank you for using our banking system!\n");
+                    exit(0);
+                default:
+                    printf("Invalid choice! Please try again.\n");
+            }
+        }
+    }
+    
+    return 0;
+}
+
+// Function to create a new account
+void createAccount() {
+    printf("\n--- Account Creation ---\n");
+    
+    printf("Enter account number: ");
+    scanf("%d", &accounts[count].accountNumber);
+    
+    printf("Enter account holder name: ");
+    scanf("%s", accounts[count].name);
+    
+    // User ID input
+    printf("Choose a user ID: ");
+    scanf("%s", accounts[count].userid);
+    
+    // Check if user ID already exists
+    for(int i = 0; i < count; i++) {
+        if(strcmp(accounts[i].userid, accounts[count].userid) == 0) {
+            printf("User ID already exists! Please choose another.\n");
+            return;
+        }
+    }
+    
+    // Password input with validation
+    char pass[20];
+    do {
+        printf("Choose a password (min 8 chars, at least 1 letter and 1 number): ");
+        scanf("%s", pass);
+    } while(!validatePassword(pass));
+    
+    strcpy(accounts[count].password, pass);
+    
+    printf("Enter initial deposit amount: ");
+    scanf("%f", &accounts[count].balance);
+    
+    printf("Account created successfully!\n");
+    count++;
+}
+
+// Function to validate password complexity
+int validatePassword(const char *pass) {
+    int len = strlen(pass);
+    int hasLetter = 0, hasDigit = 0;
+    
+    if(len < 8) {
+        printf("Password must be at least 8 characters long.\n");
+        return 0;
+    }
+    
+    for(int i = 0; i < len; i++) {
+        if(isalpha(pass[i])) hasLetter = 1;
+        if(isdigit(pass[i])) hasDigit = 1;
+    }
+    
+    if(!hasLetter || !hasDigit) {
+        printf("Password must contain both letters and numbers.\n");
+        return 0;
+    }
+    
+    return 1;
+}
+
+// Function to login
+void login() {
+    char userid[20], password[20];
+    
+    printf("\n--- Login ---\n");
+    printf("User ID: ");
+    scanf("%s", userid);
+    
+    printf("Password: ");
+    scanf("%s", password);
+    
+    for(int i = 0; i < count; i++) {
+        if(strcmp(accounts[i].userid, userid) == 0) {
+            if(strcmp(accounts[i].password, password) == 0) {
+                currentUserIndex = i;
+                printf("Login successful! Welcome, %s.\n", accounts[i].name);
+                return;
+            } else {
+                printf("Incorrect password!\n");
+                return;
+            }
+        }
+    }
+    
+    printf("User ID not found!\n");
+}
+
+// Function to deposit money
+void depositMoney() {
+    float amount;
+    
+    printf("\nEnter amount to deposit: ");
+    scanf("%f", &amount);
+    
+    accounts[currentUserIndex].balance += amount;
+    printf("Deposit successful. New balance: %.2f\n", accounts[currentUserIndex].balance);
+}
+
+// Function to withdraw money
+void withdrawMoney() {
+    float amount;
+    
+    printf("\nEnter amount to withdraw: ");
+    scanf("%f", &amount);
+    
+    if(amount > accounts[currentUserIndex].balance) {
+        printf("Insufficient balance!\n");
+    } else {
+        accounts[currentUserIndex].balance -= amount;
+        printf("Withdrawal successful. New balance: %.2f\n", accounts[currentUserIndex].balance);
+    }
+}
+
+// Function to check balance
+void checkBalance() {
+    printf("\nAccount Holder: %s\n", accounts[currentUserIndex].name);
+    printf("Current Balance: %.2f\n", accounts[currentUserIndex].balance);
+}
+
+// Function to change password
+void changePassword() {
+    char currentPass[20], newPass[20];
+    
+    printf("\n--- Change Password ---\n");
+    printf("Enter current password: ");
+    scanf("%s", currentPass);
+    
+    if(strcmp(accounts[currentUserIndex].password, currentPass) != 0) {
+        printf("Incorrect current password!\n");
+        return;
+    }
+    
+    do {
+        printf("Enter new password (min 8 chars, at least 1 letter and 1 number): ");
+        scanf("%s", newPass);
+    } while(!validatePassword(newPass));
+    
+    strcpy(accounts[currentUserIndex].password, newPass);
+    printf("Password changed successfully!\n");
+}
+
+// Function to display all accounts (admin feature)
+void displayAllAccounts() {
+    if(count == 0) {
+        printf("\nNo accounts found!\n");
+        return;
+    }
+    
+    printf("\nAll Accounts:\n");
+    printf("--------------------------------------------------------\n");
+    printf("Acc No.\t\tName\t\tUser ID\t\tBalance\n");
+    printf("--------------------------------------------------------\n");
+    
+    for(int i = 0; i < count; i++) {
+        printf("%d\t\t%s\t\t%s\t\t%.2f\n", 
+               accounts[i].accountNumber, 
+               accounts[i].name,
+               accounts[i].userid,
+               accounts[i].balance);
+    }
+}
